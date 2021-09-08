@@ -13,16 +13,18 @@ import torchvision.transforms as transforms
 
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
+from collections import namedtuple
 
 from conf import settings
 from utils import get_network, get_training_dataloader, get_test_dataloader, WarmUpLR, \
     most_recent_folder, most_recent_weights, last_epoch, best_acc_weights, get_train_val_split_dataloader, \
     get_test_dataloader_general
 
-def train(epoch):
+
+def train(epoch, net, optimizer, loss_function, training_loader, warmup_scheduler, writer, args):
     start = time.time()
     net.train()
-    for batch_index, (images, labels) in enumerate(cifar100_training_loader):
+    for batch_index, (images, labels) in enumerate(training_loader):
 
         if args.gpu:
             labels = labels.cuda()
@@ -34,7 +36,7 @@ def train(epoch):
         loss.backward()
         optimizer.step()
 
-        n_iter = (epoch - 1) * len(cifar100_training_loader) + batch_index + 1
+        n_iter = (epoch - 1) * len(training_loader) + batch_index + 1
 
         last_layer = list(net.children())[-1]
         for name, para in last_layer.named_parameters():
@@ -48,7 +50,7 @@ def train(epoch):
             optimizer.param_groups[0]['lr'],
             epoch=epoch,
             trained_samples=batch_index * args.b + len(images),
-            total_samples=len(cifar100_training_loader.dataset)
+            total_samples=len(training_loader.dataset)
         ))
 
         #update training loss for each iteration
@@ -66,8 +68,9 @@ def train(epoch):
 
     print('epoch {} training time consumed: {:.2f}s'.format(epoch, finish - start))
 
+
 @torch.no_grad()
-def eval_training(epoch=0, tb=True):
+def eval_training(net, test_loader, loss_function, writer, args, epoch=0, tb=True):
 
     start = time.time()
     net.eval()
@@ -75,7 +78,7 @@ def eval_training(epoch=0, tb=True):
     test_loss = 0.0 # cost function error
     correct = 0.0
 
-    for (images, labels) in cifar100_test_loader:
+    for (images, labels) in test_loader:
 
         if args.gpu:
             images = images.cuda()
@@ -95,21 +98,73 @@ def eval_training(epoch=0, tb=True):
     print('Evaluating Network.....')
     print('Test set: Epoch: {}, Average loss: {:.4f}, Accuracy: {:.4f}, Time consumed:{:.2f}s'.format(
         epoch,
-        test_loss / len(cifar100_test_loader.dataset),
-        correct.float() / len(cifar100_test_loader.dataset),
+        test_loss / len(test_loader.dataset),
+        correct.float() / len(test_loader.dataset),
         finish - start
     ))
     print()
 
     #add informations to tensorboard
     if tb:
-        writer.add_scalar('Test/Average loss', test_loss / len(cifar100_test_loader.dataset), epoch)
-        writer.add_scalar('Test/Accuracy', correct.float() / len(cifar100_test_loader.dataset), epoch)
+        writer.add_scalar('Test/Average loss', test_loss / len(test_loader.dataset), epoch)
+        writer.add_scalar('Test/Accuracy', correct.float() / len(test_loader.dataset), epoch)
 
-    return correct.float() / len(cifar100_test_loader.dataset)
+    return correct.float() / len(test_loader.dataset)
 
 
-def train_script(net, gpu=False, b=128, warm=1, lr=0.1, resume=False, cifar=100, val_split_size=0, val_split_existing=False):
+def produce_outputs(net, args):
+    recent_folder = most_recent_folder(os.path.join(settings.CHECKPOINT_PATH, args.net), fmt=settings.DATE_FORMAT)
+    best_weights = best_acc_weights(os.path.join(settings.CHECKPOINT_PATH, args.net, recent_folder))
+    weights_path = os.path.join(settings.CHECKPOINT_PATH, args.net, recent_folder, best_weights)
+    net.load_state_dict(torch.load(weights_path))
+
+    train_loader_ordered, val_loader_ordered = get_train_val_split_dataloader(existing_train_val_split=True,
+                                                                              cifar_type=args.cifar, shuffle=False)
+    test_loader_ordered = get_test_dataloader_general(cifar_type=args.cifar, shuffle=False)
+
+    outputs_path = os.path.join(settings.OUTPUTS_PATH, args.net)
+    if not os.path.exists(outputs_path):
+        os.mkdir(outputs_path)
+
+    train_outputs = []
+    train_labels = []
+    for images, labels in train_loader_ordered:
+        output = net(images)
+        train_outputs.append(output.detach().cpu().clone().numpy())
+        train_labels.append(labels.detach().clone().numpy())
+
+    train_out = np.concatenate(train_outputs)
+    train_lab = np.concatenate(train_labels)
+    np.save(os.path.join(outputs_path, 'train_outputs.npy'), train_out)
+    np.save(os.path.join(outputs_path, 'train_labels.npy'), train_lab)
+
+    val_outputs = []
+    val_labels = []
+    for images, labels in val_loader_ordered:
+        output = net(images)
+        val_outputs.append(output.detach().cpu().clone().numpy())
+        val_labels.append(labels.detach().clone().numpy())
+
+    val_out = np.concatenate(val_outputs)
+    val_lab = np.concatenate(val_labels)
+    np.save(os.path.join(outputs_path, 'val_outputs.npy'), val_out)
+    np.save(os.path.join(outputs_path, 'val_labels.npy'), val_lab)
+
+    test_outputs = []
+    test_labels = []
+    for images, labels in test_loader_ordered:
+        output = net(images)
+        test_outputs.append(output.detach().cpu().clone().numpy())
+        test_labels.append(labels.detach().clone().numpy())
+
+    test_out = np.concatenate(test_outputs)
+    test_lab = np.concatenate(test_labels)
+    np.save(os.path.join(outputs_path, 'test_outputs.npy'), test_out)
+    np.save(os.path.join(outputs_path, 'test_labels.npy'), test_lab)
+
+
+def train_script(net, gpu=False, b=128, warm=1, lr=0.1, resume=False, cifar=100, val_split_size=0,
+                 val_split_existing=False):
     """
 
     Args:
@@ -127,6 +182,7 @@ def train_script(net, gpu=False, b=128, warm=1, lr=0.1, resume=False, cifar=100,
 
     """
     args = locals()
+    args = namedtuple('args', args.keys())(*args.values())
 
     net = get_network(args)
 
@@ -203,8 +259,10 @@ def train_script(net, gpu=False, b=128, warm=1, lr=0.1, resume=False, cifar=100,
             if epoch <= resume_epoch:
                 continue
 
-        train(epoch)
-        acc = eval_training(epoch)
+        train(epoch=epoch, net=net, warmup_scheduler=warmup_scheduler, training_loader=cifar_train_loader,
+              optimizer=optimizer, loss_function=loss_function, writer=writer, args=args)
+        acc = eval_training(epoch=epoch, net=net, loss_function=loss_function, test_loader=cifar_test_loader,
+                            writer=writer, args=args)
 
         # start to save best performance model after learning rate decay to 0.01
         if epoch > settings.MILESTONES[1] and best_acc < acc:
@@ -220,3 +278,4 @@ def train_script(net, gpu=False, b=128, warm=1, lr=0.1, resume=False, cifar=100,
             torch.save(net.state_dict(), weights_path)
 
     writer.close()
+    produce_outputs(net, args)

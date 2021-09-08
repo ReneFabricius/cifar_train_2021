@@ -25,6 +25,9 @@ CHECKPOINT_PATH = 'checkpoint'
 #directory to save split
 SPLIT_PATH = 'split'
 
+#directory to save outputs
+OUTPUTS_PATH = 'outputs'
+
 #total training epoches
 EPOCH = 200
 MILESTONES = [60, 120, 160]
