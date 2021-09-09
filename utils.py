@@ -199,7 +199,7 @@ def get_training_dataloader(mean, std, batch_size=16, num_workers=2, shuffle=Tru
     return cifar100_training_loader
 
 def get_train_val_split_dataloader(val_count=0, existing_train_val_split=False, cifar_type=100,
-                                   batch_size=16, num_workers=2, shuffle=True):
+                                   batch_size=16, num_workers=2, shuffle=True, for_testing=False):
     """ return training dataloader
     Args:
         mean: mean of cifar100 training dataset
@@ -265,7 +265,11 @@ def get_train_val_split_dataloader(val_count=0, existing_train_val_split=False, 
         np.save(os.path.join(settings.SPLIT_PATH, 'train_idx.npy'), np.array(train_idx))
         np.save(os.path.join(settings.SPLIT_PATH, 'val_idx.npy'), np.array(val_idx))
 
-    train_subset = torch.utils.data.Subset(cifar_training_train_tf, train_idx)
+    if not for_testing:
+        train_subset = torch.utils.data.Subset(cifar_training_train_tf, train_idx)
+    else:
+        train_subset = torch.utils.data.Subset(cifar_training_val_tf, train_idx)
+
     val_subset = torch.utils.data.Subset(cifar_training_val_tf, val_idx)
 
     cifar_train_loader = DataLoader(

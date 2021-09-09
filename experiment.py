@@ -33,6 +33,8 @@ def main():
             else:
                 train_script(net=arch, gpu=True, cifar=args.cifar, val_split_existing=True, b=args.batch_sz)
 
+        os.chdir('../')
+
 
 if __name__ == '__main__':
     main()

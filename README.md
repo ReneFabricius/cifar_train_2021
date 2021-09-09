@@ -14,7 +14,7 @@ This is my experiment eviroument
 
 ### 1. enter directory
 ```bash
-$ cd pytorch-cifar100
+$ cd pytorch_cifar100
 ```
 
 ### 2. dataset

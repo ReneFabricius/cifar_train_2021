@@ -111,16 +111,22 @@ def eval_training(net, test_loader, loss_function, writer, args, epoch=0, tb=Tru
 
     return correct.float() / len(test_loader.dataset)
 
-
+@torch.no_grad()
 def produce_outputs(net, args):
+    print('Saving outputs')
     recent_folder = most_recent_folder(os.path.join(settings.CHECKPOINT_PATH, args.net), fmt=settings.DATE_FORMAT)
     best_weights = best_acc_weights(os.path.join(settings.CHECKPOINT_PATH, args.net, recent_folder))
     weights_path = os.path.join(settings.CHECKPOINT_PATH, args.net, recent_folder, best_weights)
     net.load_state_dict(torch.load(weights_path))
+    net.eval()
 
     train_loader_ordered, val_loader_ordered = get_train_val_split_dataloader(existing_train_val_split=True,
-                                                                              cifar_type=args.cifar, shuffle=False)
+                                                                              cifar_type=args.cifar, shuffle=False,
+                                                                              for_testing=True)
     test_loader_ordered = get_test_dataloader_general(cifar_type=args.cifar, shuffle=False)
+
+    if not os.path.exists(settings.OUTPUTS_PATH):
+        os.mkdir(settings.OUTPUTS_PATH)
 
     outputs_path = os.path.join(settings.OUTPUTS_PATH, args.net)
     if not os.path.exists(outputs_path):
@@ -128,7 +134,12 @@ def produce_outputs(net, args):
 
     train_outputs = []
     train_labels = []
+    print('Processing train set')
     for images, labels in train_loader_ordered:
+
+        if args.gpu:
+            images = images.cuda()
+
         output = net(images)
         train_outputs.append(output.detach().cpu().clone().numpy())
         train_labels.append(labels.detach().clone().numpy())
@@ -140,7 +151,12 @@ def produce_outputs(net, args):
 
     val_outputs = []
     val_labels = []
+    print('Processing validation set')
     for images, labels in val_loader_ordered:
+
+        if args.gpu:
+            images = images.cuda()
+
         output = net(images)
         val_outputs.append(output.detach().cpu().clone().numpy())
         val_labels.append(labels.detach().clone().numpy())
@@ -152,7 +168,12 @@ def produce_outputs(net, args):
 
     test_outputs = []
     test_labels = []
+    print('Processing test set')
     for images, labels in test_loader_ordered:
+
+        if args.gpu:
+            images = images.cuda()
+
         output = net(images)
         test_outputs.append(output.detach().cpu().clone().numpy())
         test_labels.append(labels.detach().clone().numpy())
