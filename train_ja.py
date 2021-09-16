@@ -26,9 +26,9 @@ def train(epoch, net, optimizer, loss_function, training_loader, warmup_schedule
     net.train()
     for batch_index, (images, labels) in enumerate(training_loader):
 
-        if args.gpu:
-            labels = labels.cuda()
-            images = images.cuda()
+        if args.device != 'cpu':
+            labels = labels.to(torch.device(args.device))
+            images = images.to(torch.device(args.device))
 
         optimizer.zero_grad()
         outputs = net(images)
@@ -80,9 +80,9 @@ def eval_training(net, test_loader, loss_function, writer, args, epoch=0, tb=Tru
 
     for (images, labels) in test_loader:
 
-        if args.gpu:
-            images = images.cuda()
-            labels = labels.cuda()
+        if args.device != 'cpu':
+            images = images.to(torch.device(args.device))
+            labels = labels.to(torch.device(args.device))
 
         outputs = net(images)
         loss = loss_function(outputs, labels)
@@ -92,9 +92,9 @@ def eval_training(net, test_loader, loss_function, writer, args, epoch=0, tb=Tru
         correct += preds.eq(labels).sum()
 
     finish = time.time()
-    if args.gpu:
+    if args.device != 'cpu':
         print('GPU INFO.....')
-        print(torch.cuda.memory_summary(), end='')
+        print(torch.cuda.memory_summary(device=torch.device(args.device)), end='')
     print('Evaluating Network.....')
     print('Test set: Epoch: {}, Average loss: {:.4f}, Accuracy: {:.4f}, Time consumed:{:.2f}s'.format(
         epoch,
@@ -137,8 +137,8 @@ def produce_outputs(net, args):
     print('Processing train set')
     for images, labels in train_loader_ordered:
 
-        if args.gpu:
-            images = images.cuda()
+        if args.device != 'cpu':
+            images = images.to(torch.device(args.device))
 
         output = net(images)
         train_outputs.append(output.detach().cpu().clone().numpy())
@@ -154,8 +154,8 @@ def produce_outputs(net, args):
     print('Processing validation set')
     for images, labels in val_loader_ordered:
 
-        if args.gpu:
-            images = images.cuda()
+        if args.device != 'cpu':
+            images = images.to(torch.device(args.device))
 
         output = net(images)
         val_outputs.append(output.detach().cpu().clone().numpy())
@@ -171,8 +171,8 @@ def produce_outputs(net, args):
     print('Processing test set')
     for images, labels in test_loader_ordered:
 
-        if args.gpu:
-            images = images.cuda()
+        if args.device != 'cpu':
+            images = images.to(torch.device(args.device))
 
         output = net(images)
         test_outputs.append(output.detach().cpu().clone().numpy())
@@ -184,17 +184,17 @@ def produce_outputs(net, args):
     np.save(os.path.join(outputs_path, 'test_labels.npy'), test_lab)
 
 
-def train_script(net, gpu=False, b=128, warm=1, lr=0.1, resume=False, cifar=100, val_split_size=0,
+def train_script(net, device='cpu', b=128, warm=1, lr=0.1, resume=False, cifar=100, val_split_size=0,
                  val_split_existing=False):
     """
 
     Args:
-        net:
-        gpu:
-        b:
-        warm:
-        lr:
-        resume:
+        net: string specifying network architecture
+        device: device on which to run the script
+        b: batch size
+        warm: Nuber of epochs to do warm up for
+        lr: starting learning rate
+        resume: resume training
         cifar: type of cifar (10 or 100)
         val_split_size: number of elements in validation part of training data split
         val_split_existing: folder with existing val-train split
@@ -243,8 +243,8 @@ def train_script(net, gpu=False, b=128, warm=1, lr=0.1, resume=False, cifar=100,
     writer = SummaryWriter(log_dir=os.path.join(
         settings.LOG_DIR, args.net, settings.TIME_NOW))
     input_tensor = torch.Tensor(1, 3, 32, 32)
-    if args.gpu:
-        input_tensor = input_tensor.cuda()
+    if args.device != 'cpu':
+        input_tensor = input_tensor.to(torch.device(args.device))
     writer.add_graph(net, input_tensor)
 
     # create checkpoint folder to save model
