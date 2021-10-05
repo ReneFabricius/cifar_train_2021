@@ -32,7 +32,8 @@ def main():
             if i == 0:
                 train_script(net=arch, device=args.device, cifar=args.cifar, val_split_size=args.val_size, b=args.batch_sz)
             else:
-                train_script(net=arch, device=args.device, cifar=args.cifar, val_split_existing=True, b=args.batch_sz)
+                train_script(net=arch, device=args.device, cifar=args.cifar, val_split_size=args.val_size,
+                             val_split_existing=True, b=args.batch_sz)
 
         os.chdir('../')
 

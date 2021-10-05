@@ -249,21 +249,26 @@ def get_train_val_split_dataloader(val_count=0, existing_train_val_split=False, 
         print('Unsupported cifar type')
         sys.exit()
 
-    if existing_train_val_split:
-        train_idx = np.load(os.path.join(settings.SPLIT_PATH, 'train_idx.npy'))
-        val_idx = np.load(os.path.join(settings.SPLIT_PATH, 'val_idx.npy'))
+    if val_count > 0:
+        if existing_train_val_split:
+            train_idx = np.load(os.path.join(settings.SPLIT_PATH, 'train_idx.npy'))
+            val_idx = np.load(os.path.join(settings.SPLIT_PATH, 'val_idx.npy'))
+        else:
+            train_targets = cifar_training_train_tf.targets
+            full_train_size = len(train_targets)
+            test_portion = val_count / full_train_size
+            train_idx, val_idx = train_test_split(np.arange(full_train_size), test_size=test_portion, shuffle=True,
+                                                  stratify=train_targets)
+
     else:
-        train_targets = cifar_training_train_tf.targets
-        full_train_size = len(train_targets)
-        test_portion = val_count / full_train_size
-        train_idx, val_idx = train_test_split(np.arange(full_train_size), test_size=test_portion, shuffle=True,
-                                              stratify=train_targets)
+        train_idx = np.arange(len(cifar_training_train_tf.targets))
+        val_idx = np.array()
 
-        if not os.path.exists(settings.SPLIT_PATH):
-            os.mkdir(settings.SPLIT_PATH)
+    if not os.path.exists(settings.SPLIT_PATH):
+        os.mkdir(settings.SPLIT_PATH)
 
-        np.save(os.path.join(settings.SPLIT_PATH, 'train_idx.npy'), np.array(train_idx))
-        np.save(os.path.join(settings.SPLIT_PATH, 'val_idx.npy'), np.array(val_idx))
+    np.save(os.path.join(settings.SPLIT_PATH, 'train_idx.npy'), np.array(train_idx))
+    np.save(os.path.join(settings.SPLIT_PATH, 'val_idx.npy'), np.array(val_idx))
 
     if not for_testing:
         train_subset = torch.utils.data.Subset(cifar_training_train_tf, train_idx)
@@ -281,6 +286,7 @@ def get_train_val_split_dataloader(val_count=0, existing_train_val_split=False, 
     )
 
     return cifar_train_loader, cifar_val_loader
+
 
 def get_test_dataloader_general(cifar_type=100, batch_size=16, num_workers=2, shuffle=False):
     """ return training dataloader
