@@ -262,7 +262,7 @@ def get_train_val_split_dataloader(val_count=0, existing_train_val_split=False, 
 
     else:
         train_idx = np.arange(len(cifar_training_train_tf.targets))
-        val_idx = np.array()
+        val_idx = np.array([])
 
     if not os.path.exists(settings.SPLIT_PATH):
         os.mkdir(settings.SPLIT_PATH)
