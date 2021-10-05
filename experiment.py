@@ -6,7 +6,8 @@ from train_ja import train_script
 
 
 def main():
-    networks = ['densenet121', 'resnet34', 'xception']
+    networks = ['densenet121', 'resnet34', 'xception', 'inceptionv3', 'seresnet34', 'nasnet',
+                'stochasticdepth50', 'googlenet']
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-folder', type=str, required=True, help='experiment root folder')
@@ -15,6 +16,7 @@ def main():
     parser.add_argument('-device', type=str, required=True, help='Device on which to perform the computations')
     parser.add_argument('-cifar', default=100, type=int, help='cifar type (10 or 100)')
     parser.add_argument('-val_size', default=0, type=int, help='number of images in validation set')
+    parser.add_argument('-num_net', default=3, type=int, help='Number of network architectures to train')
     args = parser.parse_args()
 
     os.chdir(args.folder)
@@ -27,7 +29,7 @@ def main():
 
         os.chdir(repl_dir)
 
-        for i, arch in enumerate(networks):
+        for i, arch in enumerate(networks[:args.num_net]):
             print('Processing architecture {}'.format(arch))
             if i == 0:
                 train_script(net=arch, device=args.device, cifar=args.cifar, val_split_size=args.val_size, b=args.batch_sz)
