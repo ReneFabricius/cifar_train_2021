@@ -1,5 +1,4 @@
 import argparse
-import torch
 import os
 
 from train_ja import train_script
