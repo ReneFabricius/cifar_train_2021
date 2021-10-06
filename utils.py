@@ -198,17 +198,22 @@ def get_training_dataloader(mean, std, batch_size=16, num_workers=2, shuffle=Tru
 
     return cifar100_training_loader
 
+
 def get_train_val_split_dataloader(val_count=0, existing_train_val_split=False, cifar_type=100,
                                    batch_size=16, num_workers=2, shuffle=True, for_testing=False):
     """ return training dataloader
     Args:
-        mean: mean of cifar100 training dataset
-        std: std of cifar100 training dataset
-        path: path to cifar100 training python dataset
+        val_count: number of samples in validation set
+        existing_train_val_split: whether to use existing train/val split.
+        location of the split indexes is specified in settings
+        cifar_type: cifar dataset type (10 or 100)
         batch_size: dataloader batchsize
         num_workers: dataloader num_works
-        shuffle: whether to shuffle
-    Returns: train_data_loader:torch dataloader object
+        shuffle: whether to shuffle before split
+        for_testing: whether to disable the use of random transformations on train_data_loader
+    Returns: train_data_loader, val_data_loader: torch dataloader objects.
+    In default settings train_data_loader performs random crop, random horizontal flip and random rotation,
+    this can be disabled by setting for_testing=True.
     """
 
     if cifar_type == 100:

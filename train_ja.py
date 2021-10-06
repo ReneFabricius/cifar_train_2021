@@ -190,9 +190,9 @@ def train_script(net, device='cpu', b=128, warm=1, lr=0.1, resume=False, cifar=1
 
     Args:
         net: string specifying network architecture
-        device: device on which to run the script
+        device: device (as string) on which to run the script
         b: batch size
-        warm: Nuber of epochs to do warm up for
+        warm: number of epochs to do warm up for
         lr: starting learning rate
         resume: resume training
         cifar: type of cifar (10 or 100)
