@@ -1,3 +1,13 @@
+# Original project at https://github.com/weiaicunzai/pytorch-cifar100
+
+## Modifications
+
+I added several modifications to the original project to enable its use for my experiments with neural networks ensembling.
+The modifications are following:
+1. Enabled training on both CIFAR10 and CIFAR100.
+2. Added support for splitting the training set into training and validation part before training.
+3. Added support for training in several replications. Each replication has specific random train/validation split and all networks in the replication are trained on this training set. 
+
 # Pytorch-cifar100
 
 practice on cifar100 using pytorch
