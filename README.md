@@ -6,7 +6,15 @@ I added several modifications to the original project to enable its use for my e
 The modifications are following:
 1. Enabled training on both CIFAR10 and CIFAR100.
 2. Added support for splitting the training set into training and validation part before training.
-3. Added support for training in several replications. Each replication has specific random train/validation split and all networks in the replication are trained on this training set. 
+3. Added support for training in several replications. Each replication has specific random train/validation split and all networks in the replication are trained on this training set.
+
+## Usage
+
+```
+$ python experiment.py -folder experiment_root_folder -repl 5 -batch_sz 128 -device cuda -cifar 10 -val_size 5000 -num_net 3
+```
+
+# Original project readme:
 
 # Pytorch-cifar100
 
