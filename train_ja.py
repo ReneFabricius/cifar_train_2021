@@ -161,10 +161,11 @@ def produce_outputs(net, args):
         val_outputs.append(output.detach().cpu().clone().numpy())
         val_labels.append(labels.detach().clone().numpy())
 
-    val_out = np.concatenate(val_outputs)
-    val_lab = np.concatenate(val_labels)
-    np.save(os.path.join(outputs_path, 'val_outputs.npy'), val_out)
-    np.save(os.path.join(outputs_path, 'val_labels.npy'), val_lab)
+    if len(val_loader_ordered.dataset) > 0:
+        val_out = np.concatenate(val_outputs)
+        val_lab = np.concatenate(val_labels)
+        np.save(os.path.join(outputs_path, 'val_outputs.npy'), val_out)
+        np.save(os.path.join(outputs_path, 'val_labels.npy'), val_lab)
 
     test_outputs = []
     test_labels = []
