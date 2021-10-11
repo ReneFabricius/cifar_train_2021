@@ -14,6 +14,63 @@ The modifications are following:
 $ python experiment.py -folder experiment_root_folder -repl 5 -batch_sz 128 -device cuda -cifar 10 -val_size 5000 -num_net 3
 ```
 
+## Output
+
+experiment.py script produces output format in the form:
+```bash
+├── data
+│   ├── cifar-10/100-batches-py
+│   └── cifar-10/100-python.tar.gz
+├── 0
+│   ├── split
+│   │   ├── val_idx.npy
+│   │   └── train_idx.npy
+│   ├── runs
+│   │   ├── architecture1
+│   │   │   └── tensorboard run statistics
+│   │   ├── architecture2
+│   │   │   └── tensorboard run statistics
+│   │   ├── .
+│   │   ├── .
+│   │   ├── .
+│   │   └── num_net
+│   ├── outputs
+│   │   ├── architecture1
+│   │   │   ├── train_outputs.npy
+│   │   │   ├── train_labels.npy
+│   │   │   ├── val_outputs.npy
+│   │   │   ├── val_labels.npy
+│   │   │   ├── test_outputs.npy
+│   │   │   └── test_labels.npy
+│   │   ├── architecture2
+│   │   │   └── ...
+│   │   ├── .
+│   │   ├── .
+│   │   ├── .
+│   │   └── num_net
+│   └── checkpoint
+│       ├── architecture1
+│       │   └── training checkpoints
+│       ├── architecture2
+│       │   └── training checkpoints
+│       ├── .
+│       ├── .
+│       ├── .
+│       └── num_net
+├── 1
+│   ├── .
+│   ├── .
+│   └── .
+├── 2
+│   ├── .
+│   ├── .
+│   └── .
+├── .
+├── .
+├── .
+└── repl-1
+```
+
 # Original project readme:
 
 # Pytorch-cifar100
