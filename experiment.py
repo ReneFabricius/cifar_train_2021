@@ -31,12 +31,32 @@ def main():
 
         for i, arch in enumerate(networks[:args.num_net]):
             print('Processing architecture {}'.format(arch))
-            if i == 0:
-                train_script(net=arch, device=args.device, cifar=args.cifar, val_split_size=args.val_size,
-                             b=args.batch_sz)
-            else:
-                train_script(net=arch, device=args.device, cifar=args.cifar, val_split_size=args.val_size,
-                             val_split_existing=True, b=args.batch_sz)
+            fin = False
+            tries = 0
+            cur_b = args.batch_sz
+            while not fin and tries < 20 and cur_b > 0:
+                if tries > 0:
+                    torch.cuda.empty_cache()
+                    print('Trying again, try {}, batch size {}'.format(tries, cur_b))
+                try:
+                    if i == 0:
+                        train_script(net=arch, device=args.device, cifar=args.cifar, val_split_size=args.val_size,
+                                     b=cur_b)
+                    else:
+                        train_script(net=arch, device=args.device, cifar=args.cifar, val_split_size=args.val_size,
+                                     val_split_existing=True, b=cur_b)
+                    fin = True
+                except RuntimeError as rerr:
+                    if 'memory' not in str(rerr):
+                        raise rerr
+                    print("OOM Exception")
+                    del rerr
+                    cur_b = int(0.9 * cur_b)
+                    tries += 1
+
+            if not fin:
+                print('Unsuccessful')
+                return -1
 
         os.chdir('../')
 
