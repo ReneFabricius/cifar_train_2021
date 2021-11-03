@@ -1,12 +1,13 @@
 import argparse
 import os
+import torch
 
 from train_ja import train_script
 
 
 def main():
-    networks = ['densenet121', 'resnet34', 'xception', 'inceptionv3', 'seresnet34', 'nasnet',
-                'stochasticdepth50', 'googlenet']
+    networks = ['seresnet34', 'stochasticdepth50', 'googlenet', 'resnext101', 'inceptionv3',
+                'densenet121', 'resnet34', 'xception']
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-folder', type=str, required=True, help='experiment root folder')
