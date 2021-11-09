@@ -111,20 +111,20 @@ class ResNext(nn.Module):
 
         return nn.Sequential(*layers)
 
-def resnext50():
+def resnext50(num_classes=100):
     """ return a resnext50(c32x4d) network
     """
-    return ResNext(ResNextBottleNeckC, [3, 4, 6, 3])
+    return ResNext(ResNextBottleNeckC, [3, 4, 6, 3], class_names=num_classes)
 
-def resnext101():
+def resnext101(num_classes=100):
     """ return a resnext101(c32x4d) network
     """
-    return ResNext(ResNextBottleNeckC, [3, 4, 23, 3])
+    return ResNext(ResNextBottleNeckC, [3, 4, 23, 3], class_names=num_classes)
 
-def resnext152():
+def resnext152(num_classes=100):
     """ return a resnext101(c32x4d) network
     """
-    return ResNext(ResNextBottleNeckC, [3, 4, 36, 3])
+    return ResNext(ResNextBottleNeckC, [3, 4, 36, 3], class_names=num_classes)
 
 
 
