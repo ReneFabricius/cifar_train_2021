@@ -269,11 +269,12 @@ def get_train_val_split_dataloader(val_count=0, existing_train_val_split=False, 
         train_idx = np.arange(len(cifar_training_train_tf.targets))
         val_idx = np.array([])
 
-    if not os.path.exists(settings.SPLIT_PATH):
-        os.mkdir(settings.SPLIT_PATH)
+    if not existing_train_val_split:
+        if not os.path.exists(settings.SPLIT_PATH):
+            os.mkdir(settings.SPLIT_PATH)
 
-    np.save(os.path.join(settings.SPLIT_PATH, 'train_idx.npy'), np.array(train_idx))
-    np.save(os.path.join(settings.SPLIT_PATH, 'val_idx.npy'), np.array(val_idx))
+        np.save(os.path.join(settings.SPLIT_PATH, 'train_idx.npy'), np.array(train_idx))
+        np.save(os.path.join(settings.SPLIT_PATH, 'val_idx.npy'), np.array(val_idx))
 
     if not for_testing:
         train_subset = torch.utils.data.Subset(cifar_training_train_tf, train_idx)

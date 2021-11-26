@@ -120,7 +120,8 @@ def produce_outputs(net, args):
     net.load_state_dict(torch.load(weights_path))
     net.eval()
 
-    train_loader_ordered, val_loader_ordered = get_train_val_split_dataloader(existing_train_val_split=True,
+    train_loader_ordered, val_loader_ordered = get_train_val_split_dataloader(val_count=args.val_split_size,
+                                                                              existing_train_val_split=True,
                                                                               cifar_type=args.cifar, shuffle=False,
                                                                               for_testing=True)
     test_loader_ordered = get_test_dataloader_general(cifar_type=args.cifar, shuffle=False)
