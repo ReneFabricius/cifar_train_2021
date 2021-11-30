@@ -200,7 +200,8 @@ def get_training_dataloader(mean, std, batch_size=16, num_workers=2, shuffle=Tru
 
 
 def get_train_val_split_dataloader(val_count=0, existing_train_val_split=False, cifar_type=100,
-                                   batch_size=16, num_workers=2, shuffle=True, for_testing=False):
+                                   batch_size=16, num_workers=2, shuffle=True, for_testing=False,
+                                   split_folder=None, custom_transform=None, data_folder=None):
     """ return training dataloader
     Args:
         val_count: number of samples in validation set
@@ -241,23 +242,28 @@ def get_train_val_split_dataloader(val_count=0, existing_train_val_split=False, 
     ])
 
     if cifar_type == 100:
-        cifar_training_train_tf = torchvision.datasets.CIFAR100(root='../data', train=True, download=True,
-                                                                transform=transform_train)
-        cifar_training_val_tf = torchvision.datasets.CIFAR100(root='../data', train=True, download=True,
-                                                                transform=transform_val)
+        cifar_training_train_tf = torchvision.datasets.CIFAR100(root='../data' if data_folder is None else data_folder,
+                                                                train=True, download=True,
+                                                                transform=transform_train if custom_transform is None else custom_transform)
+        cifar_training_val_tf = torchvision.datasets.CIFAR100(root='../data' if data_folder is None else data_folder,
+                                                              train=True, download=True,
+                                                              transform=transform_val if custom_transform is None else custom_transform)
     elif cifar_type == 10:
-        cifar_training_train_tf = torchvision.datasets.CIFAR10(root='../data', train=True, download=True,
-                                                                transform=transform_train)
-        cifar_training_val_tf = torchvision.datasets.CIFAR10(root='../data', train=True, download=True,
-                                                              transform=transform_val)
+        cifar_training_train_tf = torchvision.datasets.CIFAR10(root='../data' if data_folder is None else data_folder,
+                                                               train=True, download=True,
+                                                               transform=transform_train if custom_transform is None else custom_transform)
+        cifar_training_val_tf = torchvision.datasets.CIFAR10(root='../data' if data_folder is None else data_folder,
+                                                             train=True, download=True,
+                                                              transform=transform_val if custom_transform is None else custom_transform)
     else:
         print('Unsupported cifar type')
         sys.exit()
 
+    spl_folder = settings.SPLIT_PATH if split_folder is None else split_folder    
     if val_count > 0:
         if existing_train_val_split:
-            train_idx = np.load(os.path.join(settings.SPLIT_PATH, 'train_idx.npy'))
-            val_idx = np.load(os.path.join(settings.SPLIT_PATH, 'val_idx.npy'))
+            train_idx = np.load(os.path.join(spl_folder, 'train_idx.npy'))
+            val_idx = np.load(os.path.join(spl_folder, 'val_idx.npy'))
         else:
             train_targets = cifar_training_train_tf.targets
             full_train_size = len(train_targets)
@@ -270,11 +276,11 @@ def get_train_val_split_dataloader(val_count=0, existing_train_val_split=False, 
         val_idx = np.array([])
 
     if not existing_train_val_split:
-        if not os.path.exists(settings.SPLIT_PATH):
-            os.mkdir(settings.SPLIT_PATH)
+        if not os.path.exists(spl_folder):
+            os.mkdir(spl_folder)
 
-        np.save(os.path.join(settings.SPLIT_PATH, 'train_idx.npy'), np.array(train_idx))
-        np.save(os.path.join(settings.SPLIT_PATH, 'val_idx.npy'), np.array(val_idx))
+        np.save(os.path.join(spl_folder, 'train_idx.npy'), np.array(train_idx))
+        np.save(os.path.join(spl_folder, 'val_idx.npy'), np.array(val_idx))
 
     if not for_testing:
         train_subset = torch.utils.data.Subset(cifar_training_train_tf, train_idx)
@@ -294,7 +300,8 @@ def get_train_val_split_dataloader(val_count=0, existing_train_val_split=False, 
     return cifar_train_loader, cifar_val_loader
 
 
-def get_test_dataloader_general(cifar_type=100, batch_size=16, num_workers=2, shuffle=False):
+def get_test_dataloader_general(cifar_type=100, batch_size=16, num_workers=2, shuffle=False,
+                                custom_transform=None, data_folder=None):
     """ return training dataloader
     Args:
         mean: mean of cifar100 test dataset
@@ -322,9 +329,13 @@ def get_test_dataloader_general(cifar_type=100, batch_size=16, num_workers=2, sh
     ])
     #cifar100_test = CIFAR100Test(path, transform=transform_test)
     if cifar_type == 100:
-        cifar_test = torchvision.datasets.CIFAR100(root='../data', train=False, download=True, transform=transform_test)
+        cifar_test = torchvision.datasets.CIFAR100(root='../data' if data_folder is None else data_folder,
+                                                   train=False, download=True,
+                                                   transform=transform_test if custom_transform is None else custom_transform)
     elif cifar_type == 10:
-        cifar_test = torchvision.datasets.CIFAR10(root='../data', train=False, download=True, transform=transform_test)
+        cifar_test = torchvision.datasets.CIFAR10(root='../data' if data_folder is None else data_folder,
+                                                  train=False, download=True,
+                                                  transform=transform_test if custom_transform is None else custom_transform)
     else:
         print('Unsupported cifar type')
         sys.exit()
@@ -333,6 +344,19 @@ def get_test_dataloader_general(cifar_type=100, batch_size=16, num_workers=2, sh
         cifar_test, shuffle=shuffle, num_workers=num_workers, batch_size=batch_size)
 
     return cifar_test_loader
+
+
+def get_cifar_labels(cifar_type, data_folder=None):
+    d_fold = '../data' if data_folder is None else data_folder
+    if cifar_type == 10:
+        cifar = torchvision.datasets.CIFAR10(root=d_fold, train=False, download=True)
+    elif cifar_type == 100:
+        cifar = torchvision.datasets.CIFAR100(root=d_fold, train=False, download=True)
+    else:
+        print("Unsupported cifar type")
+        
+    return cifar.classes
+
 
 def get_test_dataloader(mean, std, cifar_type=100, batch_size=16, num_workers=2, shuffle=False):
     """ return training dataloader

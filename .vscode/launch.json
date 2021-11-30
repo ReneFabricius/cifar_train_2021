@@ -1,0 +1,23 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "${workspaceFolder}\\clip_inference.py",
+            "type": "python",
+            "request": "launch",
+            "program": "./clip_inference.py",
+            "console": "integratedTerminal",
+            "args": [
+                "-folder", "D:\\skola\\1\\weighted_ensembles\\tests\\test_cifar_2021\\data\\data_train_val_zero_c10\\",
+                "-cifar_data", "D:\\skola\\1\\weighted_ensembles\\tests\\test_cifar_2021\\data\\cifar_data\\",
+                "-clip_data", "D:\\skola\\1\\weighted_ensembles\\tests\\test_cifar_2021\\data\\clip_data\\",
+                "-batch_sz", "64",
+                "-device", "cuda",
+                "-cifar", "10"],
+            "justMyCode": false
+        }
+    ]
+}

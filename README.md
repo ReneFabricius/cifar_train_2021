@@ -1,4 +1,5 @@
-# Original project at https://github.com/weiaicunzai/pytorch-cifar100
+# Original training project at https://github.com/weiaicunzai/pytorch-cifar100
+# CLIP repository https://github.com/openai/CLIP
 
 ## Modifications
 
@@ -70,6 +71,14 @@ experiment.py script produces output format in the form:
 ├── .
 └── repl-1
 ```
+
+## CLIP inference usage
+```
+$ python clip_inference.py -folder experiment_root_folder -batch_sz 128 -device cuda -cifar 10 -cifar_data cifar_download_folder -clip_data clip_download_folder -architecture 'ViT-B/32'
+```
+
+This script should be executed with -folder pointing to root folder of finished training experiment. For each replication and corresponding split, outputs of selected clip architecture are added to the outputs folder. 
+
 
 # Original project readme:
 

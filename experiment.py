@@ -23,8 +23,8 @@ def main():
     os.chdir(args.folder)
 
     for repli in range(args.repl):
-        print('Replication {}'.format(repli))
         repl_dir = os.path.join(args.folder, str(repli))
+        print('Replication {}'.format(repli))
         if not os.path.exists(repl_dir):
             os.mkdir(repl_dir)
 
