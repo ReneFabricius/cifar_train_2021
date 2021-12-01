@@ -77,8 +77,11 @@ experiment.py script produces output format in the form:
 $ python clip_inference.py -folder experiment_root_folder -batch_sz 128 -device cuda -cifar 10 -cifar_data cifar_download_folder -clip_data clip_download_folder -architecture 'ViT-B/32'
 ```
 
-This script should be executed with -folder pointing to root folder of finished training experiment. For each replication and corresponding split, outputs of selected clip architecture are added to the outputs folder. 
+This script should be executed with -folder pointing to root folder of finished training experiment. For each replication and corresponding split, outputs of selected clip architecture are added to the outputs folder.
+Option -linear_probe performs inference by training a logistic regression multiclass model on the features of the training images. Value for parameter C is obtained by training the model with several different values and by picking the one which obtains highest accuracy on the validation set. If validation set is not present, a set of size 5000 is randomly picked from training set in stratified fashion and used as validation set. 
 
+## CLIP inference output
+Outputs follow the same format as those of regular training.
 
 # Original project readme:
 

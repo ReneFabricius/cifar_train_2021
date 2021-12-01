@@ -9,7 +9,7 @@ import argparse
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 import numpy as np
-import shutil
+from timeit import default_timer as timer
 
 from torchvision import datasets
 from conf import settings
@@ -89,9 +89,10 @@ def infer_clip():
         val_idx = torch.from_numpy(np.load(os.path.join(args.folder, repl_f, "split", "val_idx.npy"))).to(args.device)
         
         if args.lin_probe:
+            start = timer()
             lin_val_set_size = 5000
             C_start = 0.1
-            C_end = 2
+            C_end = 3
             C_step = 0.1
             C_vals = np.linspace(start=C_start, stop=C_end,
                               num=int((C_end - C_start) // C_step + 2), endpoint=True)
@@ -132,6 +133,7 @@ def infer_clip():
             print("C value selected {} with validation accuracy {}".format(best_C, best_acc))
             train_logits = torch.tensor(best_model.decision_function(train_features.cpu()), device=args.device)
             test_logits = torch.tensor(best_model.decision_function(test_features.cpu()), device=args.device)
+            print("Linear probe inference finished in {}s".format(timer() - start))
 
         clip_name = "clip_{}".format(args.architecture.replace('/', '-')) + ("_LP" if args.lin_probe else "")
         net_folder = os.path.join(args.folder, repl_f, "outputs", clip_name) 
