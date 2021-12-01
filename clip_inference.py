@@ -31,7 +31,7 @@ def infer_clip():
     
     fold_ptrn = r'^\d+$'
     folders = [f for f in os.listdir(args.folder) if os.path.isdir(os.path.join(args.folder, f))]
-    repl_folders = [f for f in folders if re.match(fold_ptrn, f) is not None]
+    repl_folders = sorted([f for f in folders if re.match(fold_ptrn, f) is not None])
     if args.verbosity > 0:
         print("Replications found {}".format(repl_folders))
 
