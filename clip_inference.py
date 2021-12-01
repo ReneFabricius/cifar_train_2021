@@ -91,11 +91,11 @@ def infer_clip():
         if args.lin_probe:
             start = timer()
             lin_val_set_size = 5000
-            C_start = 0.1
-            C_end = 3
-            C_step = 0.1
-            C_vals = np.linspace(start=C_start, stop=C_end,
-                              num=int((C_end - C_start) // C_step + 2), endpoint=True)
+            E_start = -1
+            E_end = 1
+            E_count = 11
+            C_vals = 10**np.linspace(start=E_start, stop=E_end,
+                              num=E_count, endpoint=True)
             if len(val_idx) == 0:
                 lin_train_idx, lin_val_idx = train_test_split(np.arange(train_features.shape[0]), test_size=lin_val_set_size,
                                                               shuffle=True, stratify=cifar_train.targets)
