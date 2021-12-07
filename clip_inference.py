@@ -91,9 +91,9 @@ def infer_clip():
         if args.lin_probe:
             start = timer()
             lin_val_set_size = 5000
-            E_start = -1
-            E_end = 1
-            E_count = 11
+            E_start = -1.7
+            E_end = 1.7
+            E_count = 21
             C_vals = 10**np.linspace(start=E_start, stop=E_end,
                               num=E_count, endpoint=True)
             if len(val_idx) == 0:
@@ -115,11 +115,13 @@ def infer_clip():
             best_acc = 0
             best_C = 1.0
             best_model = None
-            for C_val in C_vals:
+            for Ci, C_val in enumerate(C_vals):
+                if args.verbosity == 0:
+                    print("Progress {}%".format(100 * (Ci + 1) // len(C_vals)), end="\r")
                 if args.verbosity > 0:
                     print("Testing C value {}".format(C_val))
                     
-                log_reg = LogisticRegression(solver="sag", penalty='l2', max_iter=1000, C=C_val, verbose=args.verbosity, multi_class="multinomial")
+                log_reg = LogisticRegression(solver="sag", penalty='l2', max_iter=1000, C=C_val, verbose=args.verbosity - 1, multi_class="multinomial")
                 log_reg.fit(X=lin_train_features.cpu(), y=lin_train_tar.cpu())            
                 val_pred = torch.tensor(log_reg.decision_function(lin_val_features.cpu()), device=args.device)
                 cur_acc = torch.sum(val_pred.topk(k=1, dim=-1).indices.squeeze() == lin_val_tar).item() / len(lin_val_tar)
@@ -131,8 +133,8 @@ def infer_clip():
                     best_model = log_reg
 
             print("C value selected {} with validation accuracy {}".format(best_C, best_acc))
-            train_logits = torch.tensor(best_model.decision_function(train_features.cpu()), device=args.device)
-            test_logits = torch.tensor(best_model.decision_function(test_features.cpu()), device=args.device)
+            train_logits = torch.tensor(best_model.decision_function(train_features.cpu()), device=args.device, dtype=torch.float)
+            test_logits = torch.tensor(best_model.decision_function(test_features.cpu()), device=args.device, dtype=torch.float)
             print("Linear probe inference finished in {}s".format(timer() - start))
 
         clip_name = "clip_{}".format(args.architecture.replace('/', '-')) + ("_LP" if args.lin_probe else "")
