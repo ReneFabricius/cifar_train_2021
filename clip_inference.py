@@ -64,17 +64,17 @@ def infer_clip():
     for batch_index, (images, labels) in enumerate(train_loader):
         print("Progress {}%".format(100 * (batch_index + 1) // len(train_loader)), end="\r")
         with torch.no_grad():
-            train_features.append(model.encode_image(images.to(args.device)))
+            train_features.append(model.encode_image(images.to(args.device)).cpu())
     print("\n") 
     print("Processing test data")
     for batch_index, (images, labels) in enumerate(test_loader):
         print("Progress {}%".format(100 * (batch_index + 1) // len(test_loader)), end="\r")
         with torch.no_grad():
-            test_features.append(model.encode_image(images.to(args.device)))
+            test_features.append(model.encode_image(images.to(args.device)).cpu())
     print("\n") 
 
-    train_features = torch.cat(train_features, dim=0)
-    test_features = torch.cat(test_features, dim=0)
+    train_features = torch.cat(train_features, dim=0).to(args.device)
+    test_features = torch.cat(test_features, dim=0).to(args.device)
     train_features /= torch.linalg.vector_norm(train_features, dim=-1, keepdim=True)
     test_features /= torch.linalg.vector_norm(test_features, dim=-1, keepdim=True)
         
