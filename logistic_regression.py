@@ -1,4 +1,3 @@
-from matplotlib.pyplot import cla
 import torch
 
 class LogisticRegressionTorch:
