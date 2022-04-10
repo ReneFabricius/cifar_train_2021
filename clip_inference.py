@@ -8,6 +8,7 @@ import re
 import argparse
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
+from logistic_regression import LogisticRegressionTorch
 import numpy as np
 from timeit import default_timer as timer
 
@@ -133,9 +134,10 @@ def infer_clip():
             if args.verbosity > 0:
                 print("Testing C value {}".format(C_val))
                 
-            log_reg = LogisticRegression(solver="sag", penalty='l2', max_iter=1000, C=C_val, verbose=args.verbosity, multi_class="multinomial")
-            log_reg.fit(X=lin_train_features.cpu(), y=lin_train_tar.cpu())            
-            val_pred = torch.tensor(log_reg.decision_function(lin_val_features.cpu()), device=args.device)
+            #log_reg = LogisticRegression(solver="sag", penalty='l2', max_iter=1000, C=C_val, verbose=args.verbosity, multi_class="multinomial")
+            log_reg = LogisticRegressionTorch(C=C_val, fit_intercept=True, max_iter=100)
+            log_reg.fit(X=lin_train_features, y=lin_train_tar)            
+            val_pred = log_reg.decision_function(lin_val_features)
             cur_acc = torch.sum(val_pred.topk(k=1, dim=-1).indices.squeeze() == lin_val_tar).item() / len(lin_val_tar)
             if args.verbosity > 0:
                 print("Validation accuracy obtained {}".format(cur_acc))
@@ -145,8 +147,8 @@ def infer_clip():
                 best_model = log_reg
 
             print("C value selected {} with validation accuracy {}".format(best_C, best_acc))
-            train_logits = torch.tensor(best_model.decision_function(train_features.cpu()), device=args.device, dtype=torch.float)
-            test_logits = torch.tensor(best_model.decision_function(test_features.cpu()), device=args.device, dtype=torch.float)
+            train_logits = best_model.decision_function(train_features)
+            test_logits = best_model.decision_function(test_features)
             print("Linear probe inference finished in {}s".format(timer() - start))
 
         net_folder = os.path.join(args.folder, repl_f, "outputs", clip_name) 
