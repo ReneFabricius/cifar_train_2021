@@ -17,7 +17,6 @@ from weensembles.utils import cuda_mem_try
 from torchvision import datasets
 from conf import settings
 
-@torch.no_grad()
 def infer_clip():
     parser = argparse.ArgumentParser()
     parser.add_argument('-folder', type=str, required=True, help='experiment root folder')
