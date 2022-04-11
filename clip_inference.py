@@ -11,6 +11,7 @@ from sklearn.linear_model import LogisticRegression
 from logistic_regression import LogisticRegressionTorch
 import numpy as np
 from timeit import default_timer as timer
+from weensembles.utils import cuda_mem_try
 
 from torchvision import datasets
 from conf import settings
@@ -165,7 +166,13 @@ def infer_clip():
                 
             #log_reg = LogisticRegression(solver="sag", penalty='l2', max_iter=1000, C=C_val, verbose=args.verbosity, multi_class="multinomial")
             log_reg = LogisticRegressionTorch(C=C_val, fit_intercept=True, max_iter=100)
-            log_reg.fit(X=lin_train_features, y=lin_train_tar)            
+            cuda_mem_try(
+                fun=lambda batch_size: log_reg.fit(X=lin_train_features, y=lin_train_tar, micro_batch=batch_size),
+                start_bsz=lin_train_features.shape[0],
+                device=args.device,
+                dec_coef=0.8,
+                verbose=args.verbosity)
+            
             val_pred = log_reg.decision_function(lin_val_features)
             cur_acc = torch.sum(val_pred.topk(k=1, dim=-1).indices.squeeze() == lin_val_tar).item() / len(lin_val_tar)
             if args.verbosity > 0:
