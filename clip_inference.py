@@ -55,6 +55,8 @@ def infer_clip():
         print("Loading clip model")
         model, preprocess = clip.load(args.architecture, device=args.device, download_root=args.clip_data)
         model.eval().float()
+    else:
+        preprocess = None
     
     if (not args.load_feat) or (not has_saved_features) or (not has_saved_targets):
         print("Loading dataset")
