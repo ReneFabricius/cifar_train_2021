@@ -66,7 +66,7 @@ class TransferLearner:
         train_dataset = FeatureDataset(features=X, labels=y)
         train_dataloader = DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True)
         for epoch in range(self.epochs_):
-            if self.verbosity_ > 0:
+            if self.verbosity_ > 1:
                 print("Epoch {}/{}".format(epoch, self.epochs_ - 1))
                 
             running_loss = 0.0
@@ -106,7 +106,7 @@ class TransferLearner:
             epoch_loss = running_loss
             epoch_acc = running_corrects.double() / len(train_dataset)
             
-            if self.verbosity_ > 0:
+            if self.verbosity_ > 1:
                 print("Loss: {:.4f}, Acc: {:.4f}".format(epoch_loss, epoch_acc))
                 
 
