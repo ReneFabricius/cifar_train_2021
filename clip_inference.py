@@ -23,11 +23,13 @@ def infer_clip():
     parser.add_argument('-dataset_data', type=str, help='Folder where dataset is stored')
     parser.add_argument('-dataset', default="cifar10", choices=["cifar10", "cifar100", "imagenet"], help="Dataset to use.")
     parser.add_argument('-clip_data', type=str, help='Folder where clip model should be stored')
-    parser.add_argument('-batch_sz', type=int, default=64, help='batch size')
+    parser.add_argument('-batch_sz_clip', type=int, default=64, help='batch size for clip inference')
     parser.add_argument('-device', type=str, default="cpu", help='Device on which to perform the computations')
     parser.add_argument('-architecture', type=str, default='ViT-B/32', help='Clip architecture')
     parser.add_argument('-verbosity', default=0, type=int, help='Verbosity level')
     parser.add_argument('-lr', type=float, default=0.1, help="Learning rate")
+    parser.add_argument('-epochs', type=int, default=25, help="Number of epochs")
+    parser.add_argument('-batch_size', type=int, default=500000, help="Batch size for training")
     parser.add_argument('-multiple_repl', action="store_true", dest="multi_repl", help="Root folder contains multiple replications folders")
     parser.add_argument('-load_features', action="store_true", dest="load_feat", help="If specified, training and testing features are loaded. Expected location is the architecture subfolder of the root folder.")
     args = parser.parse_args()
@@ -78,8 +80,8 @@ def infer_clip():
             return 1
     
     if (not args.load_feat) or (not has_saved_features):
-        train_loader = DataLoader(dataset=dataset_train, batch_size=args.batch_sz, shuffle=False, num_workers=4, pin_memory=True)
-        test_loader = DataLoader(dataset=dataset_test, batch_size=args.batch_sz, shuffle=False, num_workers=4, pin_memory=True)
+        train_loader = DataLoader(dataset=dataset_train, batch_size=args.batch_sz_clip, shuffle=False, num_workers=4, pin_memory=True)
+        test_loader = DataLoader(dataset=dataset_test, batch_size=args.batch_sz_clip, shuffle=False, num_workers=4, pin_memory=True)
         
         train_features = []
         test_features = []
@@ -165,10 +167,10 @@ def infer_clip():
             if args.verbosity > 0:
                 print("Testing C value {}".format(C_val))
                 
-            transf_lear = TransferLearner(C=C_val, fit_intercept=True, epochs=25, verbosity=args.verbosity, device=args.device, learning_rate=args.lr)
+            transf_lear = TransferLearner(C=C_val, fit_intercept=True, epochs=args.epochs, verbosity=args.verbosity, device=args.device, learning_rate=args.lr)
             cuda_mem_try(
                 fun=lambda batch_size: transf_lear.fit(X=lin_train_features, y=lin_train_tar, batch_size=batch_size),
-                start_bsz=lin_train_features.shape[0],
+                start_bsz=args.batch_size,
                 device=args.device,
                 dec_coef=0.8,
                 verbose=args.verbosity)
