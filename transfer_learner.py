@@ -10,8 +10,7 @@ class FeatureDataset(Dataset):
         return self.labels_.shape[0]
     
     def __getitem__(self, idx):
-        sample = {"features": self.features_[idx], "label": self.labels_[idx]}
-        return sample
+        return self.features_[idx], self.labels_[idx]
     
 
 class TransferLearner:
