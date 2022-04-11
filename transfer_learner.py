@@ -100,6 +100,9 @@ class TransferLearner:
                     loss += L2 / (n_features * n_classes * self.C_)
 
                 loss.backward()
+                
+                print("Grad min: {}, max: {}".format(torch.min(coefs.grad), torch.max(coefs.grad)))
+                
                 opt.step()
             
             lr_scheduler.step()
