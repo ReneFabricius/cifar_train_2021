@@ -167,7 +167,7 @@ def infer_clip():
                 
             #log_reg = LogisticRegression(solver="sag", penalty='l2', max_iter=1000, C=C_val, verbose=args.verbosity, multi_class="multinomial")
             #log_reg = LogisticRegressionTorch(C=C_val, fit_intercept=True, max_iter=100)
-            transf_lear = TransferLearner(C=C_val, fit_intercept=True, epochs=25, verbosity=args.verbose)
+            transf_lear = TransferLearner(C=C_val, fit_intercept=True, epochs=25, verbosity=args.verbosity)
             cuda_mem_try(
                 fun=lambda batch_size: transf_lear.fit(X=lin_train_features, y=lin_train_tar, batch_size=batch_size),
                 start_bsz=lin_train_features.shape[0],
