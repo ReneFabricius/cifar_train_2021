@@ -85,9 +85,10 @@ class TransferLearner:
                     
                 print("Ws: {}, Bs: {}".format(Ws.requires_grad, Bs.requires_grad))
 
-                lin_comb = torch.mm(feat, Ws.T)
-                if self.fit_intercept_:
-                    lin_comb += Bs
+                with torch.set_grad_enabled(True):
+                    lin_comb = torch.mm(feat, Ws.T)
+                    if self.fit_intercept_:
+                        lin_comb += Bs
                 
                 print("lin_comb: {}".format(lin_comb.requires_grad))
                 

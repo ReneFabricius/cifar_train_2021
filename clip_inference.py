@@ -170,7 +170,7 @@ def infer_clip():
             transf_lear = TransferLearner(C=C_val, fit_intercept=True, epochs=25, verbosity=args.verbosity)
             cuda_mem_try(
                 fun=lambda batch_size: transf_lear.fit(X=lin_train_features, y=lin_train_tar, batch_size=batch_size),
-                start_bsz=4096,
+                start_bsz=32768,
                 device=args.device,
                 dec_coef=0.8,
                 verbose=args.verbosity)
