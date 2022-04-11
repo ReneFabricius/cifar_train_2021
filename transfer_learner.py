@@ -83,28 +83,22 @@ class TransferLearner:
                 else:
                     Ws = coefs
                     
-                print("Ws: {}, Bs: {}".format(Ws.requires_grad, Bs.requires_grad))
-
                 with torch.set_grad_enabled(True):
                     lin_comb = torch.mm(feat, Ws.T)
                     if self.fit_intercept_:
                         lin_comb += Bs
                 
-                print("lin_comb: {}".format(lin_comb.requires_grad))
-                
                 _, preds = torch.max(lin_comb, dim=1)
-                loss = ce_loss(lin_comb, lab)
-                
-                print("loss 1: {}".format(loss.requires_grad))
+                with torch.set_grad_enabled(True):
+                    loss = ce_loss(lin_comb, lab)
                 
                 running_loss += loss.item() * feat.size(0)
                 running_corrects += torch.sum(preds == lab.data)
                 
-                L2 = torch.sum(torch.pow(Ws, 2))
-                loss += L2 / (n_features * n_classes * self.C_)
+                with torch.set_grad_enabled(True):
+                    L2 = torch.sum(torch.pow(Ws, 2))
+                    loss += L2 / (n_features * n_classes * self.C_)
 
-                print("loss 2: {}".format(loss.requires_grad))                
-                
                 loss.backward()
                 opt.step()
             
