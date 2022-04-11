@@ -43,8 +43,8 @@ class LogisticRegressionTorch:
         Returns:
             _type_: _description_
         """
-        X.requires_grad(False)
-        y.requires_grad(False)
+        X.requires_grad_(False)
+        y.requires_grad_(False)
         
         dev = X.device
         dtp = X.dtype
