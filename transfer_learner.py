@@ -57,7 +57,7 @@ class TransferLearner:
         n_classes = len(classes)
         n_samples, n_features = X.shape
         
-        coefs = torch.zeros(size=(n_classes, n_features + int(self.fit_intercept_)), dtype=dtp, device=dev, requires_grad=True)
+        coefs = torch.randn(size=(n_classes, n_features + int(self.fit_intercept_)), dtype=dtp, device=dev, requires_grad=True)
         ce_loss = torch.nn.CrossEntropyLoss(reduction="mean")
         opt = torch.optim.SGD(params=(coefs, ), lr=0.001, momentum=0.9)
         lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer=opt, step_size=int(0.8 * self.epochs_ / 3.0), gamma=0.1)

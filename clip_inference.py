@@ -97,8 +97,8 @@ def infer_clip():
                 test_features.append(model.encode_image(images.to(args.device)).cpu())
         print("\n") 
 
-        train_features = torch.cat(train_features, dim=0).to(args.device)
-        test_features = torch.cat(test_features, dim=0).to(args.device)
+        train_features = torch.cat(train_features, dim=0)
+        test_features = torch.cat(test_features, dim=0)
 
         if not os.path.exists(os.path.join(args.folder, clip_name)):
             os.mkdir(os.path.join(args.folder, clip_name))
@@ -118,8 +118,8 @@ def infer_clip():
 
     if args.load_feat and has_saved_features:
         print("Loading features")
-        train_features = torch.from_numpy(np.load(os.path.join(args.folder, clip_name, "train_features.npy"))).to(args.device)
-        test_features = torch.from_numpy(np.load(os.path.join(args.folder, clip_name, "test_features.npy"))).to(args.device)
+        train_features = torch.from_numpy(np.load(os.path.join(args.folder, clip_name, "train_features.npy")))
+        test_features = torch.from_numpy(np.load(os.path.join(args.folder, clip_name, "test_features.npy")))
         
     if args.load_feat and has_saved_targets:
         train_targets = np.load(os.path.join(args.folder, clip_name, "train_targets.npy"))
@@ -127,13 +127,13 @@ def infer_clip():
         
     train_features /= torch.linalg.vector_norm(train_features, dim=-1, keepdim=True)
     test_features /= torch.linalg.vector_norm(test_features, dim=-1, keepdim=True)
-    train_targets = torch.from_numpy(train_targets).to(args.device)
-    test_targets = torch.from_numpy(test_targets).to(args.device)
+    train_targets = torch.from_numpy(train_targets)
+    test_targets = torch.from_numpy(test_targets)
         
     for repl_f in repl_folders:
         print("Processing subfolder {}".format(repl_f))
-        train_idx = torch.from_numpy(np.load(os.path.join(args.folder, repl_f, "split", "train_idx.npy"))).to(args.device)
-        val_idx = torch.from_numpy(np.load(os.path.join(args.folder, repl_f, "split", "val_idx.npy"))).to(args.device)
+        train_idx = torch.from_numpy(np.load(os.path.join(args.folder, repl_f, "split", "train_idx.npy")))
+        val_idx = torch.from_numpy(np.load(os.path.join(args.folder, repl_f, "split", "val_idx.npy")))
         
         start = timer()
         lin_val_set_size = 5000
@@ -145,8 +145,8 @@ def infer_clip():
         if len(val_idx) == 0:
             lin_train_idx, lin_val_idx = train_test_split(np.arange(train_features.shape[0]), test_size=lin_val_set_size,
                                                             shuffle=True, stratify=train_targets)
-            lin_train_idx = torch.from_numpy(lin_train_idx).to(device=args.device, dtype=torch.long)
-            lin_val_idx = torch.from_numpy(lin_val_idx).to(device=args.device, dtype=torch.long)
+            lin_train_idx = torch.from_numpy(lin_train_idx).to(dtype=torch.long)
+            lin_val_idx = torch.from_numpy(lin_val_idx).to(dtype=torch.long)
         else:
             lin_train_idx = train_idx
             lin_val_idx = val_idx
@@ -175,8 +175,8 @@ def infer_clip():
                 dec_coef=0.8,
                 verbose=args.verbosity)
             
-            val_pred = transf_lear.decision_function(lin_val_features)
-            cur_acc = torch.sum(val_pred.topk(k=1, dim=-1).indices.squeeze() == lin_val_tar).item() / len(lin_val_tar)
+            val_pred = transf_lear.decision_function(lin_val_features.to(device=args.device))
+            cur_acc = torch.sum(val_pred.topk(k=1, dim=-1).indices.squeeze() == lin_val_tar.to(device=args.device)).item() / len(lin_val_tar)
             if args.verbosity > 0:
                 print("Validation accuracy obtained {}".format(cur_acc))
             if cur_acc > best_acc:
@@ -184,10 +184,10 @@ def infer_clip():
                 best_C = C_val
                 best_model = transf_lear
 
-            print("C value selected {} with validation accuracy {}".format(best_C, best_acc))
-            train_logits = best_model.decision_function(train_features)
-            test_logits = best_model.decision_function(test_features)
-            print("Linear probe inference finished in {}s".format(timer() - start))
+        print("C value selected {} with validation accuracy {}".format(best_C, best_acc))
+        train_logits = best_model.decision_function(train_features.to(device=args.device)).cpu()
+        test_logits = best_model.decision_function(test_features.to(device=args.device)).cpu()
+        print("Linear probe inference finished in {}s".format(timer() - start))
 
         net_folder = os.path.join(args.folder, repl_f, "outputs", clip_name) 
         
