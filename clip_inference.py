@@ -27,6 +27,7 @@ def infer_clip():
     parser.add_argument('-device', type=str, default="cpu", help='Device on which to perform the computations')
     parser.add_argument('-architecture', type=str, default='ViT-B/32', help='Clip architecture')
     parser.add_argument('-verbosity', default=0, type=int, help='Verbosity level')
+    parser.add_argument('-lr', type=float, default=0.1, help="Learning rate")
     parser.add_argument('-multiple_repl', action="store_true", dest="multi_repl", help="Root folder contains multiple replications folders")
     parser.add_argument('-load_features', action="store_true", dest="load_feat", help="If specified, training and testing features are loaded. Expected location is the architecture subfolder of the root folder.")
     args = parser.parse_args()
@@ -164,12 +165,10 @@ def infer_clip():
             if args.verbosity > 0:
                 print("Testing C value {}".format(C_val))
                 
-            #log_reg = LogisticRegression(solver="sag", penalty='l2', max_iter=1000, C=C_val, verbose=args.verbosity, multi_class="multinomial")
-            #log_reg = LogisticRegressionTorch(C=C_val, fit_intercept=True, max_iter=100)
-            transf_lear = TransferLearner(C=C_val, fit_intercept=True, epochs=25, verbosity=args.verbosity, device=args.device)
+            transf_lear = TransferLearner(C=C_val, fit_intercept=True, epochs=25, verbosity=args.verbosity, device=args.device, learning_rate=args.lr)
             cuda_mem_try(
                 fun=lambda batch_size: transf_lear.fit(X=lin_train_features, y=lin_train_tar, batch_size=batch_size),
-                start_bsz=32768*4,
+                start_bsz=lin_train_features.shape[0],
                 device=args.device,
                 dec_coef=0.8,
                 verbose=args.verbosity)

@@ -14,13 +14,14 @@ class FeatureDataset(Dataset):
     
 
 class TransferLearner:
-    def __init__(self, C=1.0, fit_intercept=True, epochs=25, verbosity=0, device="cpu"):
+    def __init__(self, C=1.0, fit_intercept=True, epochs=25, learning_rate=0.1, verbosity=0, device="cpu"):
         self.C_ = C
         self.fit_intercept_ = fit_intercept
         self.coefs_ = None
         self.epochs_ = epochs
         self.verbosity_ = verbosity
         self.dev_ = device
+        self.lr_ = learning_rate
         
     def decision_function(self, X):
         """_summary_
@@ -59,7 +60,7 @@ class TransferLearner:
         
         coefs = torch.randn(size=(n_classes, n_features + int(self.fit_intercept_)), dtype=dtp, device=self.dev_, requires_grad=True)
         ce_loss = torch.nn.CrossEntropyLoss(reduction="mean")
-        opt = torch.optim.SGD(params=(coefs, ), lr=0.1, momentum=0.9)
+        opt = torch.optim.SGD(params=(coefs, ), lr=self.lr_, momentum=0.9)
         lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer=opt, step_size=int(0.8 * self.epochs_ / 3.0), gamma=0.1)
         
         train_dataset = FeatureDataset(features=X, labels=y)
@@ -96,8 +97,6 @@ class TransferLearner:
                 loss += L2 / (n_features * n_classes * self.C_)
 
                 loss.backward()
-                
-                print("Grad min: {}, max: {}".format(torch.min(coefs.grad), torch.max(coefs.grad)))
                 
                 opt.step()
             
