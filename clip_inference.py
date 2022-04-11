@@ -40,12 +40,23 @@ def infer_clip():
             print("Replications found {}".format(repl_folders))
     else:
         repl_folders = [""]
+        
+    has_saved_features = os.path.exists(
+        os.path.join(args.folder, clip_name, "train_features.npy")
+        ) and os.path.exists(
+            os.path.join(args.folder, clip_name, "test_features.npy"))
+        
+    has_saved_targets = os.path.exists(
+        os.path.join(args.folder, clip_name, "train_targets.npy")
+        ) and os.path.exists(
+            os.path.join(args.folder, clip_name, "test_targets.npy"))
 
-    if not args.load_feat:
+    if (not args.load_feat) or (not has_saved_features):
         print("Loading clip model")
         model, preprocess = clip.load(args.architecture, device=args.device, download_root=args.clip_data)
         model.eval().float()
-        
+    
+    if (not args.load_feat) or (not has_saved_features) or (not has_saved_targets):
         print("Loading dataset")
         if args.dataset == "cifar10":
             dataset_train = torchvision.datasets.CIFAR10(root=args.dataset_data, train=True, download=True, transform=preprocess)
@@ -61,7 +72,8 @@ def infer_clip():
         else:
             print("Error: unsupported dataset type {}".format(args.dataset))
             return 1
-        
+    
+    if (not args.load_feat) or (not has_saved_features):
         train_loader = DataLoader(dataset=dataset_train, batch_size=args.batch_sz, shuffle=False, num_workers=4, pin_memory=True)
         test_loader = DataLoader(dataset=dataset_test, batch_size=args.batch_sz, shuffle=False, num_workers=4, pin_memory=True)
         
@@ -87,15 +99,32 @@ def infer_clip():
         if not os.path.exists(os.path.join(args.folder, clip_name)):
             os.mkdir(os.path.join(args.folder, clip_name))
 
+        print("Saving features")
         np.save(os.path.join(args.folder, clip_name, "train_features.npy"), train_features.cpu())
         np.save(os.path.join(args.folder, clip_name, "test_features.npy"), test_features.cpu())
-    
-    else:
+        
+    if (not args.load_feat) or (not has_saved_targets):
+        if not os.path.exists(os.path.join(args.folder, clip_name)):
+            os.mkdir(os.path.join(args.folder, clip_name))
+        print("Saving targets")
+        train_targets = np.array(dataset_train.targets)
+        test_targets = np.array(dataset_test.targets)
+        np.save(os.path.join(args.folder, clip_name, "train_targets.npy"), train_targets)
+        np.save(os.path.join(args.folder, clip_name, "test_targets.npy"), test_targets)
+
+    if args.load_feat and has_saved_features:
+        print("Loading features")
         train_features = torch.from_numpy(np.load(os.path.join(args.folder, clip_name, "train_features.npy"))).to(args.device)
         test_features = torch.from_numpy(np.load(os.path.join(args.folder, clip_name, "test_features.npy"))).to(args.device)
         
+    if args.load_feat and has_saved_targets:
+        train_targets = np.load(os.path.join(args.folder, clip_name, "train_targets.npy"))
+        test_targets = np.load(os.path.join(args.folder, clip_name, "test_targets.npy"))
+        
     train_features /= torch.linalg.vector_norm(train_features, dim=-1, keepdim=True)
     test_features /= torch.linalg.vector_norm(test_features, dim=-1, keepdim=True)
+    train_targets = torch.from_numpy(train_targets).to(args.device)
+    test_targets = torch.from_numpy(test_targets).to(args.device)
         
     for repl_f in repl_folders:
         print("Processing subfolder {}".format(repl_f))
@@ -111,14 +140,12 @@ def infer_clip():
                             num=E_count, endpoint=True)
         if len(val_idx) == 0:
             lin_train_idx, lin_val_idx = train_test_split(np.arange(train_features.shape[0]), test_size=lin_val_set_size,
-                                                            shuffle=True, stratify=dataset_train.targets)
+                                                            shuffle=True, stratify=train_targets)
             lin_train_idx = torch.from_numpy(lin_train_idx).to(device=args.device, dtype=torch.long)
             lin_val_idx = torch.from_numpy(lin_val_idx).to(device=args.device, dtype=torch.long)
         else:
             lin_train_idx = train_idx
             lin_val_idx = val_idx
-        
-        train_targets = torch.tensor(dataset_train.targets, device=args.device)
         
         lin_train_features = train_features[lin_train_idx]
         lin_val_features = train_features[lin_val_idx]
@@ -157,12 +184,12 @@ def infer_clip():
             os.mkdir(net_folder)
         
         np.save(os.path.join(net_folder, "train_outputs.npy"), train_logits[train_idx].cpu())
-        np.save(os.path.join(net_folder, "train_labels.npy"), torch.tensor(dataset_train.targets)[train_idx].cpu())
+        np.save(os.path.join(net_folder, "train_labels.npy"), torch.tensor(train_targets)[train_idx].cpu())
         if len(val_idx) > 0:
             np.save(os.path.join(net_folder, "val_outputs.npy"), train_logits[val_idx].cpu())
-            np.save(os.path.join(net_folder, "val_labels.npy"), torch.tensor(dataset_train.targets)[val_idx].cpu())
+            np.save(os.path.join(net_folder, "val_labels.npy"), torch.tensor(train_targets)[val_idx].cpu())
         np.save(os.path.join(net_folder, "test_outputs.npy"), test_logits.cpu())
-        np.save(os.path.join(net_folder, "test_labels.npy"), torch.tensor(dataset_test.targets).cpu())
+        np.save(os.path.join(net_folder, "test_labels.npy"), torch.tensor(test_targets).cpu())
         
 
 if __name__ == "__main__":
