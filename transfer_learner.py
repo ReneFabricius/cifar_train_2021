@@ -87,7 +87,7 @@ class TransferLearner:
                 if self.fit_intercept_:
                     lin_comb += Bs
                     
-                _, preds = torch.max(lin_comb, lab)
+                _, preds = torch.max(lin_comb, dim=1)
                 loss = ce_loss(lin_comb, lab)
                 running_loss += loss.item() * feat.size(0)
                 running_corrects += torch.sum(preds == lab.data)
