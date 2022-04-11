@@ -64,7 +64,7 @@ class TransferLearner:
         
         train_dataset = FeatureDataset(features=X, labels=y)
         train_dataloader = DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True)
-        
+        print("1: {}".format(torch.is_grad_enabled())) 
         for epoch in range(self.epochs_):
             if self.verbosity_ > 0:
                 print("Epoch {}/{}".format(epoch, self.epochs_ - 1))
@@ -83,21 +83,21 @@ class TransferLearner:
                 else:
                     Ws = coefs
                     
-                with torch.set_grad_enabled(True):
-                    lin_comb = torch.mm(feat, Ws.T)
-                    if self.fit_intercept_:
-                        lin_comb += Bs
+                lin_comb = torch.mm(feat, Ws.T)
+                print("lin_comb 1: {}".format(lin_comb.requires_grad()))
+                if self.fit_intercept_:
+                    lin_comb += Bs
+                    
+                print("lin_comb 2: {}".format(lin_comb.requires_grad()))
                 
                 _, preds = torch.max(lin_comb, dim=1)
-                with torch.set_grad_enabled(True):
-                    loss = ce_loss(lin_comb, lab)
+                loss = ce_loss(lin_comb, lab)
                 
                 running_loss += loss.item() * feat.size(0)
                 running_corrects += torch.sum(preds == lab.data)
                 
-                with torch.set_grad_enabled(True):
-                    L2 = torch.sum(torch.pow(Ws, 2))
-                    loss += L2 / (n_features * n_classes * self.C_)
+                L2 = torch.sum(torch.pow(Ws, 2))
+                loss += L2 / (n_features * n_classes * self.C_)
 
                 loss.backward()
                 
