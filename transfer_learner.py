@@ -23,7 +23,7 @@ class TransferLearner:
         self.dev_ = device
         self.lr_ = learning_rate
         
-    def decision_function(self, X):
+    def decision_function(self, X, batch_size=None):
         """_summary_
 
         Args:
@@ -32,11 +32,19 @@ class TransferLearner:
         Returns:
             _type_: _description_
         """
-        if self.fit_intercept_:
-            dec = torch.mm(X, self.coefs_[:, :-1].T) + self.coefs_[:, -1]
-        else:
-            dec = torch.mm(X, self.coefs_.T) 
-        return dec
+        if batch_size is None:
+            batch_size = X.shape[0]
+        
+        decs = []
+        for mbs in range(0, X.shape[0], batch_size):
+            if self.fit_intercept_:
+                dec = torch.mm(X[mbs : mbs + batch_size], self.coefs_[:, :-1].T) + self.coefs_[:, -1]
+            else:
+                dec = torch.mm(X[mbs : mbs + batch_size], self.coefs_.T) 
+            
+            decs.append(dec)
+        
+        return torch.cat(decs, dim=0)
     
     def fit(self, X, y, batch_size=1024):
         """_summary_

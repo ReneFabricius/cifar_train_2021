@@ -185,7 +185,9 @@ def infer_clip():
                 best_model = transf_lear
 
         print("C value selected {} with validation accuracy {}".format(best_C, best_acc))
-        train_logits = best_model.decision_function(train_features.to(device=args.device)).cpu()
+        train_logits = cuda_mem_try(fun = lambda batch_size: best_model.decision_function(train_features.to(device=args.device), batch_size=batch_size),
+                                    start_bsz=train_features.shape[0],
+                                    device=args.device).cpu()
         test_logits = best_model.decision_function(test_features.to(device=args.device)).cpu()
         print("Linear probe inference finished in {}s".format(timer() - start))
 
