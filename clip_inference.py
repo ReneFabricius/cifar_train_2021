@@ -9,6 +9,7 @@ import argparse
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from logistic_regression import LogisticRegressionTorch
+from transfer_learner import TransferLearner
 import numpy as np
 from timeit import default_timer as timer
 from weensembles.utils import cuda_mem_try
@@ -165,22 +166,23 @@ def infer_clip():
                 print("Testing C value {}".format(C_val))
                 
             #log_reg = LogisticRegression(solver="sag", penalty='l2', max_iter=1000, C=C_val, verbose=args.verbosity, multi_class="multinomial")
-            log_reg = LogisticRegressionTorch(C=C_val, fit_intercept=True, max_iter=100)
+            #log_reg = LogisticRegressionTorch(C=C_val, fit_intercept=True, max_iter=100)
+            transf_lear = TransferLearner(C=C_val, fit_intercept=True, epochs=25, verbosity=args.verbose)
             cuda_mem_try(
-                fun=lambda batch_size: log_reg.fit(X=lin_train_features, y=lin_train_tar, micro_batch=batch_size),
+                fun=lambda batch_size: transf_lear.fit(X=lin_train_features, y=lin_train_tar, batch_size=batch_size),
                 start_bsz=lin_train_features.shape[0],
                 device=args.device,
                 dec_coef=0.8,
                 verbose=args.verbosity)
             
-            val_pred = log_reg.decision_function(lin_val_features)
+            val_pred = transf_lear.decision_function(lin_val_features)
             cur_acc = torch.sum(val_pred.topk(k=1, dim=-1).indices.squeeze() == lin_val_tar).item() / len(lin_val_tar)
             if args.verbosity > 0:
                 print("Validation accuracy obtained {}".format(cur_acc))
             if cur_acc > best_acc:
                 best_acc = cur_acc
                 best_C = C_val
-                best_model = log_reg
+                best_model = transf_lear
 
             print("C value selected {} with validation accuracy {}".format(best_C, best_acc))
             train_logits = best_model.decision_function(train_features)
