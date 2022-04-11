@@ -45,7 +45,7 @@ class TransferLearner:
             
             decs.append(dec.cpu())
         
-        return torch.cat(decs, dim=0)
+        return torch.cat(decs, dim=0).to(device=X.device)
     
     def fit(self, X, y, batch_size=1024):
         """_summary_
