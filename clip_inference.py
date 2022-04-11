@@ -30,6 +30,7 @@ def infer_clip():
     parser.add_argument('-lr', type=float, default=0.1, help="Learning rate")
     parser.add_argument('-epochs', type=int, default=25, help="Number of epochs")
     parser.add_argument('-batch_size', type=int, default=500000, help="Batch size for training")
+    parser.add_argument('-n_Cs', type=int, default=21, help="Number of C values between 10**-2 and 10**2 to test")
     parser.add_argument('-multiple_repl', action="store_true", dest="multi_repl", help="Root folder contains multiple replications folders")
     parser.add_argument('-load_features', action="store_true", dest="load_feat", help="If specified, training and testing features are loaded. Expected location is the architecture subfolder of the root folder.")
     args = parser.parse_args()
@@ -139,9 +140,9 @@ def infer_clip():
         
         start = timer()
         lin_val_set_size = 5000
-        E_start = -1.7
-        E_end = 1.7
-        E_count = 21
+        E_start = -2
+        E_end = 2
+        E_count = args.n_Cs
         C_vals = 10**np.linspace(start=E_start, stop=E_end,
                             num=E_count, endpoint=True)
         if len(val_idx) == 0:
@@ -185,7 +186,7 @@ def infer_clip():
                 best_model = transf_lear
 
         print("C value selected {} with validation accuracy {}".format(best_C, best_acc))
-        train_logits = cuda_mem_try(fun = lambda batch_size: best_model.decision_function(train_features.to(device=args.device), batch_size=batch_size),
+        train_logits = cuda_mem_try(fun = lambda batch_size: best_model.decision_function(train_features, batch_size=batch_size),
                                     start_bsz=train_features.shape[0],
                                     device=args.device).cpu()
         test_logits = best_model.decision_function(test_features.to(device=args.device)).cpu()

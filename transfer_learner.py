@@ -37,12 +37,13 @@ class TransferLearner:
         
         decs = []
         for mbs in range(0, X.shape[0], batch_size):
+            cur_X = X[mbs : mbs + batch_size].to(device=self.dev_)
             if self.fit_intercept_:
-                dec = torch.mm(X[mbs : mbs + batch_size], self.coefs_[:, :-1].T) + self.coefs_[:, -1]
+                dec = torch.mm(cur_X, self.coefs_[:, :-1].T) + self.coefs_[:, -1]
             else:
-                dec = torch.mm(X[mbs : mbs + batch_size], self.coefs_.T) 
+                dec = torch.mm(cur_X, self.coefs_.T) 
             
-            decs.append(dec)
+            decs.append(dec.cpu())
         
         return torch.cat(decs, dim=0)
     
