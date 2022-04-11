@@ -90,11 +90,12 @@ class TransferLearner:
                 _, preds = torch.max(lin_comb, dim=1)
                 loss = ce_loss(lin_comb, lab)
                 
-                running_loss += loss.item() * feat.size(0)
                 running_corrects += torch.sum(preds == lab.data)
                 
                 L2 = torch.sum(torch.pow(Ws, 2))
                 loss += L2 / (n_features * n_classes * self.C_)
+
+                running_loss += loss.item()
 
                 loss.backward()
                 
@@ -102,7 +103,7 @@ class TransferLearner:
             
             lr_scheduler.step()
             
-            epoch_loss = running_loss / len(train_dataset)
+            epoch_loss = running_loss
             epoch_acc = running_corrects.double() / len(train_dataset)
             
             if self.verbosity_ > 0:
@@ -111,7 +112,7 @@ class TransferLearner:
 
         coefs.requires_grad_(False)
         if not self.fit_intercept_:
-            zero_interc = torch.zeros(size=(n_classes, 1), dtype=dtp, device=dev)
+            zero_interc = torch.zeros(size=(n_classes, 1), dtype=dtp, device=self.dev_)
             coefs = torch.cat([coefs, zero_interc], dim=-1)
         
         self.coefs_ = coefs
