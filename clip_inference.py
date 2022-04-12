@@ -198,12 +198,12 @@ def infer_clip():
             os.mkdir(net_folder)
         
         np.save(os.path.join(net_folder, "train_outputs.npy"), train_logits[train_idx].cpu())
-        np.save(os.path.join(net_folder, "train_labels.npy"), torch.tensor(train_targets)[train_idx].cpu())
+        np.save(os.path.join(net_folder, "train_labels.npy"), train_targets[train_idx].cpu())
         if len(val_idx) > 0:
             np.save(os.path.join(net_folder, "val_outputs.npy"), train_logits[val_idx].cpu())
-            np.save(os.path.join(net_folder, "val_labels.npy"), torch.tensor(train_targets)[val_idx].cpu())
+            np.save(os.path.join(net_folder, "val_labels.npy"), train_targets[val_idx].cpu())
         np.save(os.path.join(net_folder, "test_outputs.npy"), test_logits.cpu())
-        np.save(os.path.join(net_folder, "test_labels.npy"), torch.tensor(test_targets).cpu())
+        np.save(os.path.join(net_folder, "test_labels.npy"), test_targets.cpu())
         
 
 if __name__ == "__main__":
