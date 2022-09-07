@@ -18,6 +18,8 @@ def main():
     parser.add_argument('-val_size', default=0, type=int, help='number of images in validation set')
     parser.add_argument('-num_net', default=3, type=int,
                         help='Number of network architectures to train (from a fixed list)')
+    parser.add_argument('-architectures', default=[], nargs='+', help="List of architectures to use, overrides num_net")
+    parser.add_argument('-output_ood', action='store_true', dest='output_ood', help="Whether to produce ood outputs (the other cifar)")
     args = parser.parse_args()
 
     os.chdir(args.folder)
@@ -29,8 +31,11 @@ def main():
             os.mkdir(repl_dir)
 
         os.chdir(repl_dir)
-
-        for i, arch in enumerate(networks[:args.num_net]):
+        
+        net_archs = args.architectures
+        if len(net_archs) == 0:
+            net_archs = networks[:args.num_net]
+        for i, arch in enumerate(net_archs):
             print('Processing architecture {}'.format(arch))
             fin = False
             tries = 0
@@ -42,10 +47,10 @@ def main():
                 try:
                     if i == 0:
                         train_script(net=arch, device=args.device, cifar=args.cifar, val_split_size=args.val_size,
-                                     b=cur_b)
+                                     b=cur_b, output_ood=args.output_ood)
                     else:
                         train_script(net=arch, device=args.device, cifar=args.cifar, val_split_size=args.val_size,
-                                     val_split_existing=True, b=cur_b)
+                                     val_split_existing=True, b=cur_b, output_ood=args.output_ood)
                     fin = True
                 except RuntimeError as rerr:
                     if 'memory' not in str(rerr):

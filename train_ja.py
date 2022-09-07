@@ -125,6 +125,8 @@ def produce_outputs(net, args):
                                                                               cifar_type=args.cifar, shuffle=False,
                                                                               for_testing=True)
     test_loader_ordered = get_test_dataloader_general(cifar_type=args.cifar, shuffle=False)
+    if args.output_ood:
+        ood_loader_ordered = get_test_dataloader_general(cifar_type=10 if args.cifar == 100 else 100, shuffle=False)
 
     if not os.path.exists(settings.OUTPUTS_PATH):
         os.mkdir(settings.OUTPUTS_PATH)
@@ -185,9 +187,27 @@ def produce_outputs(net, args):
     np.save(os.path.join(outputs_path, 'test_outputs.npy'), test_out)
     np.save(os.path.join(outputs_path, 'test_labels.npy'), test_lab)
 
+    if args.output_ood:
+        ood_outputs = []
+        ood_labels = []
+        print("Processing ood set")
+        for images, labels in ood_loader_ordered:
+
+            if args.device != 'cpu':
+                images = images.to(torch.device(args.device))
+
+            output = net(images)
+            ood_outputs.append(output.detach().cpu().clone().numpy())
+            ood_labels.append(labels.detach().clone().numpy())
+
+        ood_out = np.concatenate(test_outputs)
+        ood_lab = np.concatenate(test_labels)
+        np.save(os.path.join(outputs_path, 'ood_outputs.npy'), ood_out)
+        np.save(os.path.join(outputs_path, 'ood_labels.npy'), ood_lab)
+       
 
 def train_script(net, device='cpu', b=128, warm=1, lr=0.1, resume=False, cifar=100, val_split_size=0,
-                 val_split_existing=False):
+                 val_split_existing=False, output_ood=False):
     """
 
     Args:
@@ -200,6 +220,7 @@ def train_script(net, device='cpu', b=128, warm=1, lr=0.1, resume=False, cifar=1
         cifar: type of cifar (10 or 100)
         val_split_size: number of elements in validation part of training data split
         val_split_existing: folder with existing val-train split
+        output__ood: whether to compute and save outputs on ood dataset (the other cifar)
 
     Returns:
 
