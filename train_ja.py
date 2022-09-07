@@ -123,10 +123,13 @@ def produce_outputs(net, args):
     train_loader_ordered, val_loader_ordered = get_train_val_split_dataloader(val_count=args.val_split_size,
                                                                               existing_train_val_split=True,
                                                                               cifar_type=args.cifar, shuffle=False,
-                                                                              for_testing=True)
-    test_loader_ordered = get_test_dataloader_general(cifar_type=args.cifar, shuffle=False)
+                                                                              for_testing=True,
+                                                                              data_folder=None if args.cifar_data=="" else args.cifar_data)
+    test_loader_ordered = get_test_dataloader_general(cifar_type=args.cifar, shuffle=False,
+                                                                              data_folder=None if args.cifar_data=="" else args.cifar_data)
     if args.output_ood:
-        ood_loader_ordered = get_test_dataloader_general(cifar_type=10 if args.cifar == 100 else 100, shuffle=False)
+        ood_loader_ordered = get_test_dataloader_general(cifar_type=10 if args.cifar == 100 else 100, shuffle=False,
+                                                                              data_folder=None if args.cifar_data=="" else args.cifar_data)
 
     if not os.path.exists(settings.OUTPUTS_PATH):
         os.mkdir(settings.OUTPUTS_PATH)
@@ -207,7 +210,7 @@ def produce_outputs(net, args):
        
 
 def train_script(net, device='cpu', b=128, warm=1, lr=0.1, resume=False, cifar=100, val_split_size=0,
-                 val_split_existing=False, output_ood=False):
+                 val_split_existing=False, output_ood=False, cifar_data=""):
     """
 
     Args:
@@ -236,9 +239,11 @@ def train_script(net, device='cpu', b=128, warm=1, lr=0.1, resume=False, cifar=1
                                                                           cifar_type=cifar,
                                                                           num_workers=4,
                                                                           batch_size=b,
-                                                                          shuffle=True)
+                                                                          shuffle=True,
+                                                                          data_folder=None if cifar_data=="" else cifar_data)
 
-    cifar_test_loader = get_test_dataloader_general(cifar_type=cifar, num_workers=4, batch_size=b, shuffle=False)
+    cifar_test_loader = get_test_dataloader_general(cifar_type=cifar, num_workers=4, batch_size=b, shuffle=False,
+                                                                          data_folder=None if cifar_data=="" else cifar_data)
 
     loss_function = nn.CrossEntropyLoss()
     optimizer = optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
