@@ -288,7 +288,8 @@ def train_script(net, device='cpu', b=128, warm=1, lr=0.1, resume=False, cifar=1
             print('found best acc weights file:{}'.format(weights_path))
             print('load best training file to test acc...')
             net.load_state_dict(torch.load(weights_path))
-            best_acc = eval_training(tb=False)
+            best_acc = eval_training(tb=False, net=net, loss_function=loss_function, test_loader=cifar_test_loader,
+                            writer=writer, args=args)
             print('best acc is {:0.2f}'.format(best_acc))
 
         recent_weights_file = most_recent_weights(os.path.join(settings.CHECKPOINT_PATH, args.net, recent_folder))
