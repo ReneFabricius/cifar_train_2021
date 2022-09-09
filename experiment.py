@@ -21,6 +21,7 @@ def main():
     parser.add_argument('-architectures', default=[], nargs='+', help="List of architectures to use, overrides num_net")
     parser.add_argument('-output_ood', action='store_true', dest='output_ood', help="Whether to produce ood outputs (the other cifar)")
     parser.add_argument('-cifar_data', default="", help="Cifar data folder")
+    parser.add_argument('-resume', action='store_true', dest="resume", help="Resume training")
     args = parser.parse_args()
 
     os.chdir(args.folder)
@@ -48,10 +49,10 @@ def main():
                 try:
                     if i == 0:
                         train_script(net=arch, device=args.device, cifar=args.cifar, val_split_size=args.val_size,
-                                     b=cur_b, output_ood=args.output_ood, cifar_data=args.cifar_data)
+                                     b=cur_b, output_ood=args.output_ood, cifar_data=args.cifar_data, resume=args.resume)
                     else:
                         train_script(net=arch, device=args.device, cifar=args.cifar, val_split_size=args.val_size,
-                                     val_split_existing=True, b=cur_b, output_ood=args.output_ood, cifar_data=args.cifar_data)
+                                     val_split_existing=True, b=cur_b, output_ood=args.output_ood, cifar_data=args.cifar_data, resume=args.resume)
                     fin = True
                 except RuntimeError as rerr:
                     if 'memory' not in str(rerr):

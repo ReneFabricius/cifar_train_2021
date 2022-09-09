@@ -203,8 +203,8 @@ def produce_outputs(net, args):
             ood_outputs.append(output.detach().cpu().clone().numpy())
             ood_labels.append(labels.detach().clone().numpy())
 
-        ood_out = np.concatenate(test_outputs)
-        ood_lab = np.concatenate(test_labels)
+        ood_out = np.concatenate(ood_outputs)
+        ood_lab = np.concatenate(ood_labels)
         np.save(os.path.join(outputs_path, 'ood_outputs.npy'), ood_out)
         np.save(os.path.join(outputs_path, 'ood_labels.npy'), ood_lab)
        
