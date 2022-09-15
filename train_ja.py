@@ -130,6 +130,13 @@ def produce_outputs(net, args):
     if args.output_ood:
         ood_loader_ordered = get_test_dataloader_general(cifar_type=10 if args.cifar == 100 else 100, shuffle=False,
                                                                               data_folder=None if args.cifar_data=="" else args.cifar_data)
+        
+        ood_train_loader_ordered, _ = get_train_val_split_dataloader(val_count=0,
+                                                                     existing_train_val_split=False,
+                                                                     cifar_type=10 if args.cifar == 100 else 100,
+                                                                     shuffle=False,
+                                                                     for_testing=True,
+                                                                     data_folder=None if args.cifar_data=="" else args.cifar_data)
 
     if not os.path.exists(settings.OUTPUTS_PATH):
         os.mkdir(settings.OUTPUTS_PATH)
@@ -207,6 +214,23 @@ def produce_outputs(net, args):
         ood_lab = np.concatenate(ood_labels)
         np.save(os.path.join(outputs_path, 'ood_outputs.npy'), ood_out)
         np.save(os.path.join(outputs_path, 'ood_labels.npy'), ood_lab)
+        
+        ood_train_outputs = []
+        ood_train_labels = []
+        print("Processing ood train set")
+        for images, labels in ood_train_loader_ordered:
+            if args.device != 'cpu':
+                images = images.to(torch.device(args.device))
+
+            output = net(images)
+            ood_train_outputs.append(output.detach().cpu().clone().numpy())
+            ood_train_labels.append(labels.detach().clone().numpy())
+
+        ood_train_out = np.concatenate(ood_train_outputs)
+        ood_train_lab = np.concatenate(ood_train_labels)
+        np.save(os.path.join(outputs_path, 'ood_train_outputs.npy'), ood_train_out)
+        np.save(os.path.join(outputs_path, 'ood_train_labels.npy'), ood_train_lab)
+
        
 
 def train_script(net, device='cpu', b=128, warm=1, lr=0.1, resume=False, cifar=100, val_split_size=0,
